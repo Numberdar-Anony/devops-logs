@@ -1,0 +1,26 @@
+[
+  {
+    "source": "jenkins",
+    "service": "build-pipeline",
+    "level": "ERROR",
+    "message": "Finished: FAILURE - NullPointerException in stage Deploy",
+    "timestamp": "2024-06-01T10:00:00Z",
+    "metadata": {"job": "build-deploy", "build_number": 102}
+  },
+  {
+    "source": "terraform",
+    "service": "infra",
+    "level": "ERROR",
+    "message": "Error: resource aws_security_group.sg missing dependency",
+    "timestamp": "2024-06-01T10:03:00Z",
+    "metadata": {"resource": "aws_security_group.sg"}
+  },
+  {
+    "source": "kubernetes",
+    "service": "payment-api",
+    "level": "WARN",
+    "message": "Back-off restarting failed container crashloopbackoff",
+    "timestamp": "2024-06-01T10:05:00Z",
+    "metadata": {"namespace": "prod", "container": "payment-api", "reason": "CrashLoopBackOff"}
+  }
+]
