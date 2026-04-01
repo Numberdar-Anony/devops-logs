@@ -59,7 +59,7 @@ async def run_analysis_pipeline(logs, raw_text: str | None = None):
             root_cause=analysis.root_cause,
             recommendation=analysis.fix,
             raw_response_json={
-                "analysis": analysis.model_dump(),
+                "analysis": analysis.model_dump(mode="json"),
                 "findings": [f.summary for f in findings_to_store],
             },
             raw_logs=raw_text,
@@ -111,7 +111,12 @@ def process_upload(self, file_text: str, source: str = "auto"):
                 )
 
         self.update_state(state="running_plugins")
-        analysis_id = asyncio.run(run_analysis_pipeline(logs, file_text))
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        analysis_id = loop.run_until_complete(run_analysis_pipeline(logs, file_text))
         self.update_state(state="generating_summary")
         self.update_state(state="completed", meta={"analysis_id": analysis_id})
         return {"analysis_id": analysis_id}

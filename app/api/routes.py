@@ -224,7 +224,8 @@ async def metrics(db: AsyncSession = Depends(get_db)) -> dict:
         .order_by(func.count(PersistedFinding.id).desc())
         .limit(1)
     )
-    top_plugin = top_plugin_row.first()[0] if top_plugin_row.first() else None
+    top_plugin_first = top_plugin_row.first()
+    top_plugin = top_plugin_first[0] if top_plugin_first else None
 
     top_issue_row = await db.execute(
         select(PersistedFinding.title, func.count(PersistedFinding.id))
@@ -232,7 +233,8 @@ async def metrics(db: AsyncSession = Depends(get_db)) -> dict:
         .order_by(func.count(PersistedFinding.id).desc())
         .limit(1)
     )
-    top_issue = top_issue_row.first()[0] if top_issue_row.first() else None
+    top_issue_first = top_issue_row.first()
+    top_issue = top_issue_first[0] if top_issue_first else None
 
     top_source_row = await db.execute(
         select(PersistedAnalysis.source, func.count(PersistedAnalysis.id))
@@ -240,7 +242,8 @@ async def metrics(db: AsyncSession = Depends(get_db)) -> dict:
         .order_by(func.count(PersistedAnalysis.id).desc())
         .limit(1)
     )
-    top_source = top_source_row.first()[0] if top_source_row.first() else None
+    top_source_first = top_source_row.first()
+    top_source = top_source_first[0] if top_source_first else None
 
     over_time_rows = await db.execute(
         select(func.date(PersistedAnalysis.created_at).label("date"), func.count(PersistedAnalysis.id))

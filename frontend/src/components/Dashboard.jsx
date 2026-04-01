@@ -76,7 +76,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#2f2f2f" />
                 <XAxis dataKey="plugin" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip contentStyle={{ background: "#111827", border: "1px solid "#1f2937", color: "#e5e7eb" }} />
+                <Tooltip contentStyle={{ background: "#111827", border: "1px solid #1f2937", color: "#e5e7eb" }} />
                 <Bar dataKey="count" fill="#f97316" />
               </BarChart>
             </ResponsiveContainer>
