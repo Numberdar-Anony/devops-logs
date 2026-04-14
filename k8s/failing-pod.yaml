@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: failing-app
+  labels:
+    app: failing-app
+spec:
+  containers:
+  - name: failing-app
+    image: busybox
+    command: ["sh", "-c", "exit 1"]
+  restartPolicy: Always

@@ -7,7 +7,7 @@ setup:
 	. .venv/bin/activate && $(PIP) install -r requirements.txt
 
 run:
-	. .venv/bin/activate && DATABASE_URL=sqlite+aiosqlite:///./devops_logs.db OLLAMA_BASE_URL=http://127.0.0.1:11434 OLLAMA_MODEL=qwen2.5-coder:7b $(UVICORN) app.main:app --reload
+	. .venv/bin/activate && DATABASE_URL=sqlite+aiosqlite:///./devops_logs.db OPENROUTER_API_KEY=$$(grep OPENROUTER_API_KEY .env | cut -d '=' -f2) OPENROUTER_MODEL=openrouter/free $(UVICORN) app.main:app --reload
 
 test:
 	. .venv/bin/activate && DATABASE_URL=sqlite+aiosqlite:///./devops_logs.db python -m pytest -q

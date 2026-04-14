@@ -1,12 +1,12 @@
 # DevOps Logs Project
 
-AI-powered DevOps log analysis MVP built with FastAPI, async SQLAlchemy, and an Ollama-compatible LLM. It ingests logs from Jenkins, Kubernetes, Terraform, and ArgoCD, runs pluggable detectors, correlates events, and asks an LLM for a plain-English root cause and fix.
+AI-powered DevOps log analysis MVP built with FastAPI, async SQLAlchemy, and an OpenRouter-compatible LLM. It ingests logs from Jenkins, Kubernetes, Terraform, and ArgoCD, runs pluggable detectors, correlates events, and asks an LLM for a plain-English root cause and fix.
 
 ## Features
 - REST ingestion of JSON logs (`POST /logs`).
 - Plugin system with detectors for Jenkins failures, Terraform errors, and Kubernetes CrashLoopBackOff.
 - Correlation engine that spots Jenkins -> Terraform -> Kubernetes failure chains.
-- AI root-cause analysis via Ollama-compatible endpoint (`/api/generate`).
+- AI root-cause analysis via OpenRouter API.
 - Findings stored in PostgreSQL (SQLite fallback for local quick start).
 - Minimal, modular folder layout ready for extension.
 
@@ -42,14 +42,14 @@ export DATABASE_URL="postgresql+asyncpg://devops:devops@localhost:5432/devops_lo
 export DATABASE_URL="sqlite+aiosqlite:///./devops_logs.db"
 ```
 
-3) **Ollama / LLM**
+3) **OpenRouter / LLM**
 ```bash
-# Install and start Ollama if not running
-ollama serve
-# Pull a model; defaults to llama3 in settings
-ollama pull llama3
+# Set OPENROUTER_API_KEY in your .env file
+OPENROUTER_API_KEY=your_key_here
+# Optional: change model
+OPENROUTER_MODEL=openrouter/free
 ```
-The app calls `http://localhost:11434/api/generate` with model `llama3`. Override with `OLLAMA_URL` / `OLLAMA_MODEL` env vars if needed.
+The app calls `https://openrouter.ai/api/v1` with model `openrouter/free` by default. Override with `OPENROUTER_MODEL` env var if needed.
 
 4) **Run API**
 ```bash
@@ -81,6 +81,23 @@ curl http://localhost:8000/findings
 ### Health
 ```bash
 curl http://localhost:8000/health
+```
+
+## Database Migrations
+This project uses Alembic for database migrations. When you pull new backend changes that include schema updates, you must run the migrations:
+
+```bash
+alembic upgrade head
+```
+
+If you are running the project inside Docker, you can run the migration against the running container:
+```bash
+docker-compose exec backend alembic upgrade head
+```
+
+To create a new migration after modifying models:
+```bash
+alembic revision --autogenerate -m "description of changes"
 ```
 
 ## Extending

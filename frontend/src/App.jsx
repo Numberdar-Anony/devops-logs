@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { analyzeBuffered, fetchAnalyses, fetchAnalysisDetail, startAnalysisUpload, fetchJobStatus } from "./api";
+import { analyzeBuffered, fetchAnalysisHistory, fetchAnalysisDetail, startAnalysisUpload, fetchJobStatus } from "./api";
+
 import RawLogsPanel from "./components/RawLogsPanel";
 import Dashboard from "./components/Dashboard";
 
@@ -45,50 +46,79 @@ const mockAnalysis = {
   },
 };
 
-function Sidebar({ analyses, onSelect, onDashboard }) {
+function Sidebar({ analysisHistory, onSelect, onDashboard }) {
   const links = [{ label: "Dashboard", icon: "solar:widget-5-linear", action: onDashboard }];
+
   return (
-    <aside className="w-64 flex-col border-r border-white/5 bg-[#0a0a0a] pt-6 pb-4 hidden md:flex h-full relative z-20">
-      <div className="px-5 mb-8 flex items-center gap-2">
+    <aside className="w-64 border-r border-white/10 bg-[#0a0a0a] flex flex-col h-screen relative z-20 shrink-0">
+      <div className="px-5 pt-6 mb-8 flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-orange-500 shadow-glow"></div>
-        <span className="text-zinc-100 font-normal tracking-tight text-base">DevOps Logs</span>
+        <span className="text-zinc-100 font-medium tracking-tight text-base">DevOps Logs</span>
       </div>
+
       <div className="px-4 mb-6 flex gap-2">
-        <button className="flex-1 bg-gradient-to-b from-orange-500/90 to-orange-600/90 text-white text-sm font-normal py-2 rounded-md shadow-glow transition-all flex items-center justify-center gap-2 border border-orange-400/20">
+        <button className="flex-1 bg-gradient-to-b from-orange-500 to-orange-600 text-white text-sm font-normal py-2 rounded-md shadow-glow transition-all flex items-center justify-center gap-2 border border-orange-400/20">
+          <Icon icon="solar:add-circle-linear" className="text-lg" />
           New Analysis
         </button>
-        <button className="w-9 bg-zinc-800/30 text-zinc-400 rounded-md border border-white/5 flex items-center justify-center transition-colors">
-          <Icon icon="solar:add-circle-linear" className="text-lg" />
-        </button>
       </div>
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
-        {links.map((l) => (
-          <button
-            key={l.label}
-            onClick={l.action}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-normal text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-lg"
-          >
-            <Icon icon={l.icon} className="text-lg opacity-70" />
-            {l.label}
-          </button>
-        ))}
-        <div className="text-xs text-zinc-500 uppercase tracking-wider mt-4 mb-2 px-2">Analyses</div>
-        {(analyses || []).map((a) => (
-          <button
-            key={a.analysis_id}
-            onClick={() => onSelect(a.analysis_id)}
-            className="w-full text-left px-3 py-2.5 rounded-lg bg-white/5 border border-white/5 hover:border-orange-500/40 hover:text-zinc-100 transition-colors"
-          >
-            <div className="flex items-center justify-between text-sm text-zinc-200">
-              <span>{a.analysis_id}</span>
-              <span className="text-xs capitalize px-2 py-0.5 rounded border border-white/10 bg-white/5">{a.source || "unknown"}</span>
+
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <nav className="px-3 space-y-1 mb-6">
+          {links.map((l) => (
+            <button
+              key={l.label}
+              onClick={l.action}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-normal text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-lg transition-colors"
+            >
+              <Icon icon={l.icon} className="text-lg opacity-70" />
+              {l.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="px-5 text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-4">
+          Analyses History
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-2">
+          {!analysisHistory || !Array.isArray(analysisHistory) || analysisHistory.length === 0 ? (
+            <div className="text-zinc-500 text-xs px-2 py-4 italic text-center border border-dashed border-white/5 rounded-lg">
+              No analyses found in history
             </div>
-            <div className="text-xs text-zinc-500 mt-1 capitalize">
-              {a.severity || "n/a"} · {a.summary?.slice(0, 36) || "summary pending"}
-            </div>
-          </button>
-        ))}
-      </nav>
+          ) : (
+            analysisHistory.map((a) => (
+              <button
+                key={a.analysis_id}
+                onClick={() => onSelect(a.analysis_id)}
+                className="w-full text-left px-3 py-3 rounded-xl bg-white/5 border border-white/5 hover:border-orange-500/40 hover:bg-white/10 transition-all group"
+              >
+                <div className="flex items-center justify-between text-xs text-zinc-200 mb-1.5">
+                  <span className="font-mono font-medium text-orange-200/80 truncate pr-2">
+                    {a.analysis_id?.split('-').pop() || "ANL"}
+                  </span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-white/5 text-zinc-400 border border-white/10">
+                    {a.source || "log"}
+                  </span>
+                </div>
+                <div className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  {a.summary || "No summary available"}
+                </div>
+              </button>
+            ))
+          )}
+          
+          {/* JSON Debug Dump (Internal use) */}
+          {analysisHistory?.length > 0 && (
+            <details className="mt-4 px-2">
+              <summary className="text-[10px] text-zinc-700 cursor-pointer">Raw Data</summary>
+              <pre className="text-[8px] text-zinc-600 overflow-hidden">
+                {JSON.stringify(analysisHistory[0], null, 2)}
+              </pre>
+            </details>
+          )}
+        </div>
+      </div>
     </aside>
   );
 }
@@ -130,39 +160,39 @@ function Header({ analysisId, onAnalyze, loading, onFileChange, source, setSourc
   );
 }
 
-function SummaryCard({ data, activeTab, setActiveTab, selectedLogLine }) {
+function SummaryCard({ data: analysis, activeTab, setActiveTab, selectedLogLine }) {
   return (
     <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden shadow-sm">
       <div className="p-6 pb-4 border-b border-white/5">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
             <h2 className="text-xl text-zinc-100 mb-4 flex items-center gap-3">
-              Analysis {data?.analysis_id || "Pending"}
+              Analysis {analysis?.analysis_id || "Pending"}
               <span
                 className={`px-2 py-0.5 rounded-md text-xs ${
-                  severityClasses[(data?.severity || "low").toLowerCase()] || severityClasses.low
+                  severityClasses[(analysis?.severity || "low").toLowerCase()] || severityClasses.low
                 }`}
               >
-                {data?.severity || "unknown"}
+                {analysis?.severity || "unknown"}
               </span>
             </h2>
-            <p className="text-sm text-zinc-300 max-w-3xl">{data?.summary || "Upload logs to start analysis."}</p>
+            <p className="text-sm text-zinc-300 max-w-3xl">{analysis?.summary || "Upload logs to start analysis."}</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="px-3 py-1.5 rounded-md border border-white/10 bg-zinc-800/50 text-zinc-300 text-sm flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-glow" />
-              {data?.source || "auto"}
+              {analysis?.source || "auto"}
             </div>
           </div>
         </div>
       </div>
       <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="p-6">
-        {activeTab === "Overview" && <p className="text-sm text-zinc-200">{data?.summary || "Upload logs to begin."}</p>}
-        {activeTab === "Root Cause" && <p className="text-sm text-zinc-200">{data?.root_cause || "Pending."}</p>}
+        {activeTab === "Overview" && <p className="text-sm text-zinc-200">{analysis?.summary || "Upload logs to begin."}</p>}
+        {activeTab === "Root Cause" && <p className="text-sm text-zinc-200">{analysis?.root_cause || "Pending."}</p>}
         {activeTab === "Event Timeline" && (
           <ul className="space-y-2 text-sm text-zinc-200">
-            {(data?.timeline || []).map((e, idx) => (
+            {(analysis?.timeline || []).map((e, idx) => (
               <li key={idx} className="flex gap-2 items-start">
                 <span className="text-zinc-500 w-20">{e.time}</span>
                 <span>{e.event}</span>
@@ -170,8 +200,123 @@ function SummaryCard({ data, activeTab, setActiveTab, selectedLogLine }) {
             ))}
           </ul>
         )}
-        {activeTab === "Raw Logs" && <RawLogsPanel rawLogs={data?.raw_logs || ""} selectedLine={selectedLogLine} />}
-        {activeTab === "Recommended Fixes" && <p className="text-sm text-zinc-200">{data?.recommendation || "Pending."}</p>}
+        {activeTab === "Raw Logs" && <RawLogsPanel rawLogs={analysis?.raw_logs || ""} selectedLine={selectedLogLine} />}
+        {activeTab === "Recommended Fixes" && (
+          <div className="space-y-4">
+            {(() => {
+              console.log("analysis state before render", analysis);
+              console.log("analysis.structured_fix", analysis?.structured_fix);
+              return analysis?.structured_fix ? (
+                <StructuredFixCard fix={analysis.structured_fix} />
+              ) : (
+                <div className="recommendation-card">
+                  <div className="label">Recommendation</div>
+                  <p>{analysis?.recommendation || "No recommendation available."}</p>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StructuredFixCard({ fix }) {
+  const [copied, setCopied] = useState(null);
+
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-6 shadow-glow-sm">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-orange-400 font-medium flex items-center gap-2">
+          <Icon icon="solar:shield-check-bold" className="text-lg" />
+          Structured Remediation
+        </h3>
+        {fix.reason && (
+          <div className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] text-orange-300 uppercase tracking-widest font-bold">
+            High Confidence
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <FixField
+            label="Repository"
+            value={fix.repository}
+            icon="solar:glob-linear"
+          />
+          <FixField
+            label="File Path"
+            value={fix.file}
+            icon="solar:file-text-linear"
+            canCopy
+            onCopy={() => copyToClipboard(fix.file, 'file')}
+            isCopied={copied === 'file'}
+          />
+          <FixField
+            label="Target Field"
+            value={fix.field}
+            icon="solar:tag-linear"
+          />
+        </div>
+        <div className="space-y-4">
+          <FixField
+            label="Current Value"
+            value={fix.current_value}
+            icon="solar:history-linear"
+            dimmed
+          />
+          <FixField
+            label="Suggested Value"
+            value={fix.suggested_value}
+            icon="solar:magic-stick-3-bold"
+            highlight
+            canCopy
+            onCopy={() => copyToClipboard(fix.suggested_value, 'value')}
+            isCopied={copied === 'value'}
+          />
+        </div>
+      </div>
+
+      {fix.reason && (
+        <div className="mt-6 pt-6 border-t border-orange-500/10">
+          <p className="text-xs text-orange-300/60 uppercase tracking-widest mb-2 font-bold">Remediation Context</p>
+          <p className="text-sm text-zinc-300 leading-relaxed italic">"{fix.reason}"</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FixField({ label, value, icon, canCopy, onCopy, isCopied, highlight, dimmed }) {
+  if (!value) return null;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold flex items-center gap-1.5">
+        <Icon icon={icon} className="text-xs opacity-50" />
+        {label}
+      </p>
+      <div className={`group flex items-center justify-between p-2.5 rounded-lg border ${
+        highlight 
+          ? 'bg-orange-500/10 border-orange-500/30 text-orange-200' 
+          : 'bg-zinc-900/50 border-white/5 text-zinc-300'
+      } ${dimmed ? 'opacity-60' : ''}`}>
+        <code className="text-xs font-mono break-all">{value}</code>
+        {canCopy && (
+          <button 
+            onClick={onCopy}
+            className="ml-2 p-1.5 rounded hover:bg-white/10 text-zinc-500 hover:text-zinc-200 transition-colors shrink-0"
+          >
+            <Icon icon={isCopied ? "solar:check-read-linear" : "solar:copy-linear"} className={isCopied ? "text-emerald-400" : ""} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -370,7 +515,7 @@ export default function App() {
   const [source, setSource] = useState("auto");
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
-  const [analyses, setAnalyses] = useState([]);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
   const [jobId, setJobId] = useState("");
   const [jobStatus, setJobStatus] = useState("");
   const [activeTab, setActiveTab] = useState("Overview");
@@ -386,15 +531,23 @@ export default function App() {
     setError("");
     setLoading(true);
     try {
-      let resp;
+      let response;
       if (file) {
-        const job = await startAnalysisUpload(file, source);
-        setJobId(job.job_id);
-        setJobStatus(job.status);
+        response = await startAnalysisUpload(file, source);
       } else {
-        resp = await analyzeBuffered();
-        setAnalysis(resp);
-        loadAnalyses();
+        response = await analyzeBuffered();
+      }
+
+      if (response?.analysis) {
+        const normalized = response.analysis;
+        setAnalysis(normalized);
+        setActiveView("analysis");
+        loadHistory();
+      } else {
+        setAnalysis(null);
+        setJobId(response.job_id);
+        setJobStatus(response.status);
+        setLoading(true);
       }
     } catch (err) {
       console.error(err);
@@ -404,73 +557,82 @@ export default function App() {
     }
   };
 
-  const loadAnalyses = async () => {
+  const loadHistory = async () => {
     try {
-      const data = await fetchAnalyses();
-      setAnalyses(data);
+      const data = await fetchAnalysisHistory();
+      setAnalysisHistory(data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load analysis history", err);
     }
   };
 
   const handleSelectAnalysis = async (analysisId) => {
     try {
       setLoading(true);
+      setError("");
       const data = await fetchAnalysisDetail(analysisId);
-      setAnalysis({
-        analysis_id: data.analysis_id,
-        source: data.source,
-        severity: data.severity,
-        summary: data.summary,
-        root_cause: data.root_cause,
-        recommendation: data.recommendation,
-        findings: data.findings,
-        timeline: data.raw_response_json?.timeline || [],
-        affected_resources: data.affected_resources,
-        raw_logs: data.raw_logs,
-      });
+      
+      const normalized = data?.analysis ? data.analysis : data;
+
+      setAnalysis(normalized);
       setSelectedLogLine(null);
       setActiveView("analysis");
     } catch (err) {
       console.error(err);
-      setError("Failed to load analysis.");
+      if (err.response && err.response.status === 404) {
+        setError("Analysis not found. It may have been deleted.");
+        setTimeout(() => {
+          setActiveView("dashboard");
+          setError("");
+        }, 3000);
+      } else {
+        setError("Failed to load analysis.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAnalyses();
+    loadHistory();
   }, []);
 
   useEffect(() => {
     if (!jobId) return;
     const interval = setInterval(async () => {
       try {
-        const status = await fetchJobStatus(jobId);
-        setJobStatus(status.status);
-        if (status.status === "completed" && status.analysis_id) {
-          const detail = await fetchAnalysisDetail(status.analysis_id);
-          setAnalysis({
-            analysis_id: detail.analysis_id,
-            source: detail.source,
-            severity: detail.severity,
-            summary: detail.summary,
-            root_cause: detail.root_cause,
-            recommendation: detail.recommendation,
-            findings: detail.findings,
-            timeline: detail.raw_response_json?.timeline || [],
-            affected_resources: detail.affected_resources,
-            raw_logs: detail.raw_logs,
-          });
+        const data = await fetchJobStatus(jobId);
+        setJobStatus(data.status);
+
+        if (data?.status === "completed" || data?.status === "finished") {
+          const analysisId =
+            data?.analysis?.analysis_id ||
+            data?.analysis_id ||
+            data?.analysis?.id ||
+            data?.id;
+
+          const fullAnalysis = await fetchAnalysisDetail(analysisId);
+
+          console.log("job status response", data);
+          console.log("full analysis response", fullAnalysis);
+
+          const normalized = fullAnalysis?.analysis
+            ? fullAnalysis.analysis
+            : fullAnalysis;
+
+          setAnalysis(normalized);
+          setLoading(false);
           setJobId("");
           setJobStatus("");
           setSelectedLogLine(null);
           setActiveView("analysis");
-          loadAnalyses();
-        } else if (status.status === "failed") {
-          setError(status.error || "Job failed");
+          loadHistory();
+          clearInterval(interval);
+        } else if (data.status === "failed") {
+          setError(data.error || "Job failed");
           setJobId("");
+          setLoading(false);
+          clearInterval(interval);
         }
       } catch (err) {
         console.error(err);
@@ -482,7 +644,7 @@ export default function App() {
   return (
     <div className="h-screen flex overflow-hidden bg-ink">
       <Sidebar
-        analyses={analyses}
+        analysisHistory={analysisHistory}
         onSelect={handleSelectAnalysis}
         onDashboard={() => setActiveView("dashboard")}
       />
@@ -505,11 +667,14 @@ export default function App() {
               <span className="text-orange-200/80">Current step: {jobStatus || "queued"}</span>
             </div>
           )}
-          <h1 className="text-2xl text-zinc-100">Log Analysis</h1>
           {activeView === "dashboard" ? (
-            <Dashboard />
+            <>
+              <h1 className="text-2xl text-zinc-100">System Dashboard</h1>
+              <Dashboard />
+            </>
           ) : (
             <>
+              <h1 className="text-2xl text-zinc-100">Analysis Detail</h1>
               <SummaryCard data={analysis} activeTab={activeTab} setActiveTab={setActiveTab} selectedLogLine={selectedLogLine} />
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-4 space-y-6">

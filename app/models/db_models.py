@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, DateTime, Integer, JSON, String, Text, func, ForeignKey, Float
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -53,6 +54,7 @@ class PersistedAnalysis(Base):
     summary = Column(Text)
     root_cause = Column(Text)
     recommendation = Column(Text)
+    structured_fix = Column(JSON, nullable=True)
     raw_response_json = Column(JSON)
     raw_logs = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -86,3 +88,4 @@ class PersistedResource(Base):
     plugin = Column(String(64))
 
     analysis = relationship("PersistedAnalysis", back_populates="resources")
+

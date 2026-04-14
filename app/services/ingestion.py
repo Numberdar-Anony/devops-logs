@@ -28,8 +28,6 @@ class LogIngestionService:
                     raw=log.model_dump(mode="json"),
                 )
                 db.add(record)
-        if db:
-            await db.commit()
         self._trim(now)
         return len(logs), len(self.buffer)
 

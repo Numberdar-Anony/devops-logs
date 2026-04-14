@@ -12,6 +12,12 @@ class LogEntry(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class IngestRequest(BaseModel):
+    source: Literal["jenkins", "kubernetes", "terraform", "argocd"]
+    service: str
+    logs: List[Dict[str, Any]]
+
+
 class LogIngestResponse(BaseModel):
     stored: int
     buffer_size: int
@@ -34,12 +40,21 @@ class FindingRead(FindingCreate):
     model_config = {"from_attributes": True}
 
 
+class StructuredFix(BaseModel):
+    repository: Optional[str] = None
+    file: Optional[str] = None
+    field: Optional[str] = None
+    current_value: Optional[str] = None
+    suggested_value: Optional[str] = None
+    reason: Optional[str] = None
+
 class AnalysisResult(BaseModel):
     root_cause: str
     impact: str
     fix: str
     correlation_id: Optional[str] = None
     created_at: Optional[datetime] = None
+    structured_fix: Optional[StructuredFix] = None
 
     model_config = {"from_attributes": True}
 
@@ -92,3 +107,4 @@ class AnalysisDetail(AnalysisSummary):
     affected_resources: List[AffectedResourceItem] = []
     raw_response_json: Optional[Dict[str, Any]] = None
     raw_logs: Optional[str] = None
+    structured_fix: Optional[StructuredFix] = None

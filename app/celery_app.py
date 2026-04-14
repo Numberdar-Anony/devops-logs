@@ -34,3 +34,5 @@ if os.getenv("REDIS_URL", "").startswith("rediss://"):
 
 # auto-discover tasks in app.tasks
 celery.autodiscover_tasks(["app"])
+
+import app.scheduler.periodic_tasks
